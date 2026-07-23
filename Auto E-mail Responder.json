@@ -1,0 +1,1526 @@
+{
+  "name": "Auto E-mail Responder",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -880,
+        32
+      ],
+      "id": "1c8767cd-14eb-4cd5-a74b-b2f76df13e18",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N48mhOEfSMdM4goC",
+          "name": "werewkastasiu@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "55ed2b26-c4f1-408e-97d2-0ff329f81fd7",
+              "leftValue": "={{ $json.Subject }}",
+              "rightValue": "no-reply",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "7a280483-e748-4373-865b-33f16fcc7abe",
+              "leftValue": "={{ $json.Subject }}",
+              "rightValue": "noreply",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "a65d5633-84ce-4965-b582-dca46e0f240f",
+              "leftValue": "={{ $json.From }}",
+              "rightValue": "no-reply",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "4ce54c53-e329-47e8-994f-b19f86be5208",
+              "leftValue": "={{ $json.From }}",
+              "rightValue": "noreply",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "a73c7142-3277-4c34-8edc-3879551daf78",
+              "leftValue": "={{ $json.snippet }}",
+              "rightValue": "no-reply",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "867b2841-bf8f-4838-b0e1-3c13f7c8b329",
+              "leftValue": "={{ $json.snippet }}",
+              "rightValue": "noreply",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        -752,
+        32
+      ],
+      "id": "0f3bd698-d69c-4717-958f-301b4a949160",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Jesteś zaawansowanym analitykiem zgłoszeń w dziale obsługi klienta. Twoim zadaniem jest przeanalizowanie maila i zwrócenie danych WYŁĄCZNIE w formacie JSON o poniższej strukturze:\n{\n  \"category\": \"Usterka Techniczna | Rozliczenia | Zapytanie Ofertowe | Reklamacja i Zwrot | Inne\",\n  \"sentiment\": \"Pozytywny | Neutralny | Negatywny | Bardzo Krytyczny\",\n  \"priority\": \"P1 - Critical | P2 - High | P3 - Medium | P4 - Low\",\n  \"summary\": \"Maksymalnie 2 zdania podsumowania problemu\",\n  \"suggested_reply\": \"Gotowy szkic profesjonalnej odpowiedzi do klienta\"\n}\n"
+            },
+            {
+              "content": "=Temat maila: {{ $json.Subject }}\nTreść maila: {{ $json.snippet }} (lub pełna treść w zależności od pola w Gmailu)"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "textFormat": {
+            "textOptions": {
+              "type": "json_object"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        -464,
+        32
+      ],
+      "id": "427f9adb-698a-420c-91e4-17408ae251f7",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "iC0rPhpds7bBIPjw",
+          "name": "api; me"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output[0].content[0].text.priority }}",
+                    "rightValue": "P1|P2",
+                    "operator": {
+                      "type": "string",
+                      "operation": "regex"
+                    },
+                    "id": "4aba3942-1688-4c14-8ab3-f5bba281ce8e"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Priority high"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "991fd944-71d6-43be-8812-cd414ea6e0fb",
+                    "leftValue": "={{ $json.output[0].content[0].text.category }}",
+                    "rightValue": "Zapytanie Ofertowe",
+                    "operator": {
+                      "type": "string",
+                      "operation": "regex"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Offer"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -160,
+        0
+      ],
+      "id": "a4da2e12-acb7-4c0a-80e0-8dce1ff80300",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "8955777818",
+        "message": "=🚨 *PILNE ZGŁOSZENIE (P1/P2)* 🚨 \n\n👤 *Od:* {{ $('Gmail Trigger').item.json.From }}\n\n🏷️ *Kategoria:* {{ $('Message a model').item.json.output[0].content[0].text.category }}\n\n🔥 *Senti:* {{ $('Message a model').item.json.output[0].content[0].text.sentiment }}  \n\n📝 *Podsumowanie:* {{ $('Message a model').item.json.output[0].content[0].text.summary }} \n\n\n💬 *Szkic odpowiedzi:* `{{ $json.output[0].content[0].text.suggested_reply || $('Message a model').item.json.output[0].content[0].text.suggested_reply }}`\n\n🎶 *Czy mam poprawić wiadomość (zasugeruj zmiany), wysłać czy zostawić tobie?*",
+        "responseType": "customForm",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Co zrobić ze szkicem?",
+              "fieldType": "radio",
+              "defaultValue": "Zatwierdź i wyślij",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Zatwierdź i wyślij"
+                  },
+                  {
+                    "option": "Popraw z uwagami"
+                  },
+                  {
+                    "option": "Zostaw dla mnie (ogwiazdkuj)"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Ewentualne uwagi do poprawki",
+              "fieldType": "textarea",
+              "placeholder": "Napisz, co AI ma zmienić (np. 'Dodaj 10% rabatu', 'Zmień ton na bardziej formalny')..."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -96,
+        -432
+      ],
+      "id": "f7c6bd46-8fc7-4712-bc92-923fd6a99b50",
+      "name": "Send message and wait for response",
+      "webhookId": "ffdf77ef-7ee5-4b53-b623-dfee20ea137e",
+      "credentials": {
+        "telegramApi": {
+          "id": "QsmSL4hmfA8vtnhc",
+          "name": "MICHALSON"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.data['Co zrobić ze szkicem?'] }}",
+                    "rightValue": "Zatwierdź i wyślij",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "c916bf10-3094-4b4b-820f-217f121eb711"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Send mail"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "d808d265-3fb9-4f18-b9e4-adf5148e16b3",
+                    "leftValue": "={{ $json.data['Co zrobić ze szkicem?'] }}",
+                    "rightValue": "Zostaw dla mnie (ogwiazdkuj)",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Starred"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "16300a76-8842-4912-9f36-d764751981bb",
+                    "leftValue": "={{ $json.data['Co zrobić ze szkicem?'] }}",
+                    "rightValue": "Popraw z uwagami",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Retake"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        64,
+        -448
+      ],
+      "id": "96ff7aa9-b823-45d2-930c-3e22996bc1fb",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Gmail Trigger').item.json.From }}",
+        "subject": "= Re: {{ $node[\"Gmail Trigger\"].json.Subject }}).",
+        "emailType": "text",
+        "message": "={{ $('Message a model').item.json.output[0].content[0].text.suggested_reply }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        240,
+        -656
+      ],
+      "id": "70bd6cf0-5f35-482c-a66b-ada9add349bf",
+      "name": "Send a message",
+      "webhookId": "5c7adb4b-2e3f-41fd-93c4-4050c4cc80e0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N48mhOEfSMdM4goC",
+          "name": "werewkastasiu@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Y4Ch8xlSWegYlZrx8P0d8k7W97d2R57oEuGG8ozgwBM",
+          "mode": "list",
+          "cachedResultName": "Auto mail response",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Y4Ch8xlSWegYlZrx8P0d8k7W97d2R57oEuGG8ozgwBM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Mails sent auto",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Y4Ch8xlSWegYlZrx8P0d8k7W97d2R57oEuGG8ozgwBM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID Zgłoszenia": "={{ $node[\"Gmail Trigger\"].json.id }}",
+            "Data i Czas": "={{ $now }}",
+            "Nadawca (Klient)": "={{ $('Gmail Trigger').item.json.From }}",
+            "Kategoria": "={{ $('Message a model').item.json.output[0].content[0].text.category }}",
+            "Priorytet": "={{ $('Message a model').item.json.output[0].content[0].text.priority }}",
+            "Sentyment ": "={{ $('Message a model').item.json.output[0].content[0].text.sentiment }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ID Zgłoszenia",
+              "displayName": "ID Zgłoszenia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Data i Czas",
+              "displayName": "Data i Czas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Nadawca (Klient)",
+              "displayName": "Nadawca (Klient)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Kategoria",
+              "displayName": "Kategoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priorytet",
+              "displayName": "Priorytet",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sentyment ",
+              "displayName": "Sentyment ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        -656
+      ],
+      "id": "4a8a6927-2799-4fce-af1b-795619c08534",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lTklSGCA6Hqn4oNH",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "STARRED"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        240,
+        -496
+      ],
+      "id": "d4e187da-1df5-4d92-b23e-cbbd36f8b4ee",
+      "name": "Add label to message",
+      "webhookId": "9f5b5bcd-94ae-42dc-a4b2-d041317af44c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N48mhOEfSMdM4goC",
+          "name": "werewkastasiu@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Y4Ch8xlSWegYlZrx8P0d8k7W97d2R57oEuGG8ozgwBM",
+          "mode": "list",
+          "cachedResultName": "Auto mail response",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Y4Ch8xlSWegYlZrx8P0d8k7W97d2R57oEuGG8ozgwBM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1058124796,
+          "mode": "list",
+          "cachedResultName": "Oczekujące_Zgłoszenia",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Y4Ch8xlSWegYlZrx8P0d8k7W97d2R57oEuGG8ozgwBM/edit#gid=1058124796"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Message_ID": "={{ $('Gmail Trigger').item.json.id }}",
+            "Data Dodania": "={{ $now }}",
+            "Nadawca": "={{ $('Gmail Trigger').item.json.From }}",
+            "Temat": "={{ $('Gmail Trigger').item.json.Subject }}",
+            "Treść": "={{ $('Gmail Trigger').item.json.snippet }}",
+            "Priorytet": "={{ $('Message a model').item.json.output[0].content[0].text.priority }}",
+            "Kategoria": "={{ $('Message a model').item.json.output[0].content[0].text.category }}",
+            "aStatus": "Oczekujące"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Message_ID",
+              "displayName": "Message_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Data Dodania",
+              "displayName": "Data Dodania",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Nadawca",
+              "displayName": "Nadawca",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Temat",
+              "displayName": "Temat",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Treść",
+              "displayName": "Treść",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priorytet",
+              "displayName": "Priorytet",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Kategoria",
+              "displayName": "Kategoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "aStatus",
+              "displayName": "aStatus",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        -496
+      ],
+      "id": "9bf3f498-ca6f-4503-a0d2-5fb55475ef6c",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lTklSGCA6Hqn4oNH",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=Jesteś profesjonalnym asystentem AI ds. obsługi klienta. \n\nTwoim zadaniem jest poprawienie wcześniej wygenerowanej odpowiedzi do klienta na podstawie uwag przekazanych przez pracownika.\n\n---\nHISTORIA I KONTEKST:\n- Pierwotny szkic odpowiedzi:\n{{ $('Message a model').item.json.output[0].content[0].text.suggested_reply }}\n\n- Uwagi pracownika do poprawki:\n{{ $('Send message and wait for response').item.json.data['Ewentualne uwagi do poprawki'] }}\n\n---\nZASADY:\n1. Uwzględnij WSZYSTKIE uwagi pracownika i zmień szkic odpowiedzi zgodnie z jego instrukcją.\n2. Zachowaj profesjonalny, pomocny i uprzejmy ton.\n3. Odpowiedz WYŁĄCZNIE poprawioną treścią maila (gotową do wysłania, bez zbędnych wstępów typu \"Oto poprawiony mail:\").\n\nPOPRAWIONA ODPOWIEDŹ:\nZwróć poprawny JSON w formacie:\n{\n  \"suggested_reply\": \"Tutaj wpisz poprawioną treść wiadomości\"\n}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "textFormat": {
+            "textOptions": {
+              "type": "json_object"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        272,
+        -336
+      ],
+      "id": "e51ca7e3-bba7-4e14-9df0-f12e42b12226",
+      "name": "Message a model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "iC0rPhpds7bBIPjw",
+          "name": "api; me"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "8955777818",
+        "message": "=💼 *NOWE ZAPYATANIE / OFERTA* 💼\n\n👤 *Od:* {{ $('Gmail Trigger').item.json.From }}\n\n📌 *Kategoria:* {{ $('Message a model').item.json.output[0].content[0].text.category }}\n\n📝 *Podsumowanie zapytania:* {{ $('Message a model').item.json.output[0].content[0].text.summary }}\n\n💬 *Sugerowana odpowiedź / oferta:* \n`{{ $json.suggested_reply || $json.output?.[0]?.content?.[0]?.text?.suggested_reply || $('Message a model').item.json.output[0].content[0].text.suggested_reply }}`\n\n🎶 *Wybierz akcję w formularzu poniżej (zatwierdź, popraw lub przygotuj wycenę ręcznie):*",
+        "responseType": "customForm",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Co zrobić z ofertą?",
+              "fieldType": "radio",
+              "defaultValue": "Zatwierdź i wyślij",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Zatwierdź i wyślij"
+                  },
+                  {
+                    "option": "Popraw z uwagami"
+                  },
+                  {
+                    "option": "Przygotuj wycenę ręcznie"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Ewentualne uwagi do poprawki",
+              "fieldType": "textarea",
+              "placeholder": "Napisz, co zmodyfikować (np. 'Zmniejsz cenę o 5%', 'Dodaj darmową dostawę')..."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        48,
+        -48
+      ],
+      "id": "98b28489-57b3-4719-a97c-b7de3e0ff42a",
+      "name": "Send message and wait for response1",
+      "webhookId": "85b5de6f-a45d-4112-b103-256844c6fe91",
+      "credentials": {
+        "telegramApi": {
+          "id": "QsmSL4hmfA8vtnhc",
+          "name": "MICHALSON"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.data['Co zrobić z ofertą?'] }}",
+                    "rightValue": "Zatwierdź i wyślij",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "7f4493bd-c1f8-409a-bb98-91fe4e0c16c9"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Sent"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "fc83fe9b-aa8b-4914-9f18-f5b3ba3cd27c",
+                    "leftValue": "={{ $json.data['Co zrobić z ofertą?'] }}",
+                    "rightValue": "Popraw z uwagami",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Repeat"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "3c288535-348f-470e-889a-dc973daedbc7",
+                    "leftValue": "={{ $json.data['Co zrobić z ofertą?'] }}",
+                    "rightValue": "Przygotuj wycenę ręcznie",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Todo"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        -64
+      ],
+      "id": "e686c2bb-3c54-49b3-9e35-62d314079639",
+      "name": "Switch2"
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "IMPORTANT"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        400,
+        -16
+      ],
+      "id": "25b34634-40f3-4a6f-8513-ce96484b331c",
+      "name": "Add label to message1",
+      "webhookId": "d61b0d26-b331-4888-b6fc-994744e15929",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N48mhOEfSMdM4goC",
+          "name": "werewkastasiu@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Y4Ch8xlSWegYlZrx8P0d8k7W97d2R57oEuGG8ozgwBM",
+          "mode": "list",
+          "cachedResultName": "Auto mail response",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Y4Ch8xlSWegYlZrx8P0d8k7W97d2R57oEuGG8ozgwBM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1704752732,
+          "mode": "list",
+          "cachedResultName": "TODO offers",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Y4Ch8xlSWegYlZrx8P0d8k7W97d2R57oEuGG8ozgwBM/edit#gid=1704752732"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Sender": "={{ $('Gmail Trigger').item.json.From }}",
+            "Msg_id": "={{ $('Gmail Trigger').item.json.id }}",
+            "Subject": "={{ $('Gmail Trigger').item.json.Subject }}",
+            "Snippet": "={{ $('Gmail Trigger').item.json.snippet }}",
+            "aStatus": "TODO",
+            "Date": "={{ $now }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Sender",
+              "displayName": "Sender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Msg_id",
+              "displayName": "Msg_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Snippet",
+              "displayName": "Snippet",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "aStatus",
+              "displayName": "aStatus",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        576,
+        -16
+      ],
+      "id": "0f6c1e80-72e9-40dc-9404-9b9e43b12fec",
+      "name": "Append row in sheet2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lTklSGCA6Hqn4oNH",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Gmail Trigger').item.json.From }}",
+        "subject": "=Re:  {{ $('Gmail Trigger').item.json.Subject }}",
+        "emailType": "text",
+        "message": "={{ $('Message a model').item.json.output[0].content[0].text.suggested_reply }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        384,
+        -144
+      ],
+      "id": "d51e5ac5-b42a-4322-8c6a-47e5ea0e487f",
+      "name": "Send a message1",
+      "webhookId": "4c6985f3-71a0-4a60-95fa-2c7cfde2288c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N48mhOEfSMdM4goC",
+          "name": "werewkastasiu@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Y4Ch8xlSWegYlZrx8P0d8k7W97d2R57oEuGG8ozgwBM",
+          "mode": "list",
+          "cachedResultName": "Auto mail response",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Y4Ch8xlSWegYlZrx8P0d8k7W97d2R57oEuGG8ozgwBM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Mails sent auto",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Y4Ch8xlSWegYlZrx8P0d8k7W97d2R57oEuGG8ozgwBM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID Zgłoszenia": "={{ $('Gmail Trigger').item.json.id }}",
+            "Data i Czas": "={{ $now }}",
+            "Nadawca (Klient)": "={{ $('Gmail Trigger').item.json.From }}",
+            "Kategoria": "={{ $('Message a model').item.json.output[0].content[0].text.category }}",
+            "Priorytet": "={{ $('Message a model').item.json.output[0].content[0].text.priority }}",
+            "Sentyment ": "={{ $('Message a model').item.json.output[0].content[0].text.sentiment }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ID Zgłoszenia",
+              "displayName": "ID Zgłoszenia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Data i Czas",
+              "displayName": "Data i Czas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Nadawca (Klient)",
+              "displayName": "Nadawca (Klient)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Kategoria",
+              "displayName": "Kategoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priorytet",
+              "displayName": "Priorytet",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sentyment ",
+              "displayName": "Sentyment ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        576,
+        -144
+      ],
+      "id": "60efbb35-4257-43e1-bd0d-8fa6088d0189",
+      "name": "Append row in sheet3",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lTklSGCA6Hqn4oNH",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=Jesteś profesjonalnym asystentem AI ds. obsługi klienta. \n\nTwoim jedynym zadaniem jest poprawienie wcześniej wygenerowanej odpowiedzi do klienta na podstawie uwag przekazanych przez pracownika.\n\n---\nHISTORIA I KONTEKST:\n- Pierwotny szkic odpowiedzi:\n{{ $('Message a model').item.json.output[0].content[0].text.suggested_reply }}\n\n- Uwagi pracownika do poprawki:\n{{ $('Send message and wait for response1').item.json.data['Ewentualne uwagi do poprawki'] }}\n\n---\nZASADY:\n1. Uwzględnij WSZYSTKIE uwagi pracownika i zmień szkic odpowiedzi zgodnie z jego instrukcją.\n2. Zachowaj profesjonalny, pomocny i kulturalny ton.\n3. MUSISZ zwrócić odpowiedź WYŁĄCZNIE jako poprawny obiekt JSON, bez zadnego dodatkowego tekstu ani formatowania Markdown (nie używaj ```json).\n\nOto dokładny format JSON, który MUSISZ zwrócić:\n{\n  \"suggested_reply\": \"Tutaj wpisz nową, poprawioną treść maila gotową do wysłania\"\n}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "textFormat": {
+            "textOptions": {
+              "type": "json_object"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        528,
+        112
+      ],
+      "id": "302365d8-b34a-4509-9307-5b685b2870e4",
+      "name": "Message a model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "iC0rPhpds7bBIPjw",
+          "name": "api; me"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Gmail Trigger').item.json.From }}",
+        "subject": "=Re:  {{ $('Gmail Trigger').item.json.Subject }}",
+        "message": "Dzień dobry,  Dziękujemy za kontakt. Potwierdzamy otrzymanie Twojej wiadomości.  Nasz zespół już się nią zajmuje – odpowiemy najszybciej, jak to możliwe.  Pozdrawiamy, Zespół Obsługi Klienta",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -608,
+        32
+      ],
+      "id": "1b00a803-675a-4a76-be1c-4f98ce526243",
+      "name": "Send a message2",
+      "webhookId": "073d000d-be81-4ee0-9ab8-07de87b36c21",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N48mhOEfSMdM4goC",
+          "name": "werewkastasiu@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Y4Ch8xlSWegYlZrx8P0d8k7W97d2R57oEuGG8ozgwBM",
+          "mode": "list",
+          "cachedResultName": "Auto mail response",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Y4Ch8xlSWegYlZrx8P0d8k7W97d2R57oEuGG8ozgwBM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1587108200,
+          "mode": "list",
+          "cachedResultName": "Fallback",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Y4Ch8xlSWegYlZrx8P0d8k7W97d2R57oEuGG8ozgwBM/edit#gid=1587108200"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Msg_id\\": "={{ $('Gmail Trigger').item.json.id }}",
+            "Sendewr": "={{ $('Gmail Trigger').item.json.From }}",
+            "Subjct": "={{ $('Gmail Trigger').item.json.Subject }}",
+            "Snippet": "={{ $('Gmail Trigger').item.json.snippet }}",
+            "Date": "={{ $now }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Msg_id\\",
+              "displayName": "Msg_id\\",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sendewr",
+              "displayName": "Sendewr",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Subjct",
+              "displayName": "Subjct",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Snippet",
+              "displayName": "Snippet",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        16,
+        304
+      ],
+      "id": "bb98bedd-2d9b-4874-b17b-f0be3cd8632e",
+      "name": "Append row in sheet4",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lTklSGCA6Hqn4oNH",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "CATEGORY_SOCIAL"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        304
+      ],
+      "id": "e2fb777a-37ff-40f8-b5f9-8e1ea6077693",
+      "name": "Add label to message2",
+      "webhookId": "a04e5ac0-a449-4f2f-af13-e66a756d00de",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N48mhOEfSMdM4goC",
+          "name": "werewkastasiu@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "8955777818",
+        "text": "=ℹ️ *Nowa wiadomość (Inne / Fallback)*  \n\n👤 *Od:* {{ $node[\"Gmail Trigger\"].json.From }} \n\n📌 *Temat:* {{ $node[\"Gmail Trigger\"].json.Subject }} \n\n📝 *Skrót:* {{ $('Message a model').item.json.output[0].content[0].text.summary }} \n\n_Wiadomość zarchiwizowana automatycznie._",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        432,
+        304
+      ],
+      "id": "effd4c11-0f27-42dd-a32b-3f5d3a282298",
+      "name": "Send a text message",
+      "webhookId": "2104b616-de9a-46dc-bdcc-6b76914d7441",
+      "credentials": {
+        "telegramApi": {
+          "id": "QsmSL4hmfA8vtnhc",
+          "name": "MICHALSON"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send message and wait for response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send message and wait for response1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row in sheet4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message and wait for response": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add label to message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add label to message": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Send message and wait for response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message and wait for response1": {
+      "main": [
+        [
+          {
+            "node": "Switch2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch2": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Message a model2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add label to message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add label to message1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model2": {
+      "main": [
+        [
+          {
+            "node": "Send message and wait for response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message2": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet4": {
+      "main": [
+        [
+          {
+            "node": "Add label to message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add label to message2": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "23b801e9-bd11-4d65-a1ee-3c8afb3f18b3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "afdd7c7f9c788226d2e3c76e9233b868ba8dcced4ecd9bae92237ed76e9755b7"
+  },
+  "nodeGroups": [],
+  "id": "UTu7AD2R6yfVDC8S",
+  "tags": []
+}
